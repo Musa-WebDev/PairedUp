@@ -1,46 +1,17 @@
+import { addActivityAction, addGoalAction, createInvitationAction, createWorkspaceAction } from '@/actions/workspace'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ invite?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  return (
-    <main className="min-h-screen bg-gray-50 dark:bg-black p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="flex justify-between items-center bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
-          <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
-            <p className="text-gray-500">Welcome back, {user.email}</p>
-          </div>
-          
-          <form action={async () => {
-            'use server'
-            const supabase = await createClient()
-            await supabase.auth.signOut()
-            redirect('/login')
-          }}>
-            <Button variant="outline">Sign Out</Button>
-          </form>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* We will build these out in the next steps */}
-          <div className="p-6 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
-            <h2 className="text-lg font-semibold mb-4">Activities & Movies</h2>
-            <p className="text-gray-500 text-sm">Loading components...</p>
-          </div>
-          <div className="p-6 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
-            <h2 className="text-lg font-semibold mb-4">Goals</h2>
-            <p className="text-gray-500 text-sm">Loading components...</p>
-          </div>
-        </div>
-      </div>
-    </main>
-  )
+  if (!user) redirect('/login')
+  const { data: memberships } = await supabase.from('workspace_members').select('workspace_id').eq('user_id', user.id).limit(1)
+  const workspaceId = memberships?.[0]?.workspace_id
+  const params = await searchParams
+  if (!workspaceId) return <main className="mx-auto flex min-h-screen max-w-lg items-center p-6"><form action={createWorkspaceAction} className="w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-700 dark:bg-slate-800"><p className="text-sm font-semibold text-indigo-500">WELCOME TO PAIRUP</p><h1 className="mt-2 text-3xl font-bold">Create your shared space</h1><p className="mt-2 text-slate-500 dark:text-slate-400">Invite your people, add plans, and keep each other accountable.</p><input name="name" required placeholder="e.g. Thato & Partner" className="mt-6 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 dark:border-slate-600 dark:bg-slate-900"/><button className="mt-4 h-11 w-full rounded-xl bg-indigo-600 font-semibold text-white">Create workspace</button></form></main>
+  const [{ data: activities }, { data: goals }] = await Promise.all([supabase.from('activities').select('id,title,category,status,created_at').eq('workspace_id', workspaceId).order('created_at', { ascending: false }), supabase.from('goals').select('id,title,status,progress,target_date').eq('workspace_id', workspaceId).order('created_at', { ascending: false })])
+  return <main className="min-h-screen bg-slate-50 p-4 text-slate-950 dark:bg-[#0f172a] dark:text-slate-50 sm:p-8"><div className="mx-auto max-w-6xl space-y-8"><header><p className="text-sm font-semibold text-indigo-500">PAIRUP WORKSPACE</p><h1 className="text-3xl font-bold">Your shared dashboard</h1></header>{params.invite && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">Invite link created: <code className="select-all font-semibold">{params.invite}</code></div>}<section className="grid gap-4 lg:grid-cols-3"><Form title="Add a suggestion" action={addActivityAction}><input type="hidden" name="workspaceId" value={workspaceId}/><input name="title" required placeholder="Movie, show, or activity"/><select name="category"><option value="movie">Movie</option><option value="show">Show</option><option value="activity">Activity</option></select><textarea name="description" placeholder="A note for the group (optional)"/><button>Add suggestion</button></Form><Form title="Set a goal" action={addGoalAction}><input type="hidden" name="workspaceId" value={workspaceId}/><input name="title" required placeholder="Goal title"/><input name="targetDate" type="date"/><button>Add goal</button></Form><Form title="Invite someone" action={createInvitationAction}><input type="hidden" name="workspaceId" value={workspaceId}/><input name="email" type="email" required placeholder="their@email.com"/><button>Create invite link</button></Form></section><section className="grid gap-6 lg:grid-cols-2"><List title="Suggestions" items={activities?.map(a => `${a.title} · ${a.category} · ${a.status}`) ?? []}/><List title="Goals" items={goals?.map(g => `${g.title} · ${g.progress}% · ${g.status}`) ?? []}/></section></div></main>
 }
+function Form({ title, action, children }: { title: string; action: (formData: FormData) => Promise<void>; children: React.ReactNode }) { return <form action={action} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800"><h2 className="font-semibold">{title}</h2><div className="space-y-2 [&_input]:h-10 [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-slate-300 [&_input]:bg-transparent [&_input]:px-3 [&_select]:h-10 [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-slate-300 [&_select]:bg-transparent [&_select]:px-3 [&_textarea]:min-h-20 [&_textarea]:w-full [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-slate-300 [&_textarea]:bg-transparent [&_textarea]:p-3">{children}</div></form> }
+function List({ title, items }: { title: string; items: string[] }) { return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800"><h2 className="mb-4 font-semibold">{title}</h2>{items.length ? <ul className="space-y-3">{items.map(item => <li key={item} className="rounded-xl bg-slate-100 p-3 text-sm dark:bg-slate-700">{item}</li>)}</ul> : <p className="text-sm text-slate-500">Nothing here yet—add the first one above.</p>}</section> }

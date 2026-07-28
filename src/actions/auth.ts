@@ -29,7 +29,7 @@ export async function signupAction(data: AuthInput) {
     return { error: 'Display name is required for signup' }
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { data: signUpData, error } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
     options: {
@@ -41,6 +41,10 @@ export async function signupAction(data: AuthInput) {
 
   if (error) {
     return { error: error.message }
+  }
+
+  if (!signUpData.session) {
+    return { requiresEmailConfirmation: true }
   }
 
   redirect('/')

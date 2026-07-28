@@ -15,19 +15,19 @@ export function AuthForm() {
   const { register, formState: { errors } } = form
 
   return (
-    <div className="w-full max-w-md p-8 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-950/5 dark:border-slate-700 dark:bg-slate-800 dark:shadow-black/20 sm:p-8">
+      <div className="mb-8 text-center">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-50">
           {mode === 'login' ? 'Welcome Back' : 'Create an Account'}
         </h2>
-        <p className="text-sm text-gray-500 mt-2">
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           {mode === 'login' ? 'Sign in to your account to continue' : 'Sign up to start tracking with your partner'}
         </p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md border border-red-200">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300">
             {error}
           </div>
         )}
@@ -74,7 +74,7 @@ export function AuthForm() {
 
         <Button 
           type="submit" 
-          className="w-full mt-6" 
+          className="mt-6 w-full bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400" 
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -85,12 +85,12 @@ export function AuthForm() {
       </form>
 
       <div className="mt-6 text-center text-sm">
-        <span className="text-gray-500">
+        <span className="text-slate-500 dark:text-slate-400">
           {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
         </span>
         <button 
           onClick={toggleMode}
-          className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+          className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
         >
           {mode === 'login' ? 'Sign up' : 'Sign in'}
         </button>

@@ -11,7 +11,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 dark:bg-[#0f172a] sm:p-6">
       <AuthForm />
     </div>
   )

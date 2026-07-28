@@ -47,6 +47,8 @@ export function useAuthForm(initialMode: AuthMode = 'login') {
         
       if (result?.error) {
         setError(result.error)
+      } else if (result && 'requiresEmailConfirmation' in result && result.requiresEmailConfirmation) {
+        router.push(`/check-email?email=${encodeURIComponent(data.email)}`)
       }
     } catch (err) {
       setError('An unexpected error occurred.')
