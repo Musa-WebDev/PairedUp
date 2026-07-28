@@ -17,5 +17,7 @@ export default async function CalendarPage() {
     .select('id,kind,title,entry_date,entry_time,starts_at,ends_at,status')
     .eq('workspace_id', activeWorkspace.id)
 
-  return <ProtectedShell><CalendarView entries={data ?? []} /></ProtectedShell>
+  const entries = (data ?? []).filter((entry) => !['completed', 'achieved'].includes(entry.status))
+
+  return <ProtectedShell><CalendarView entries={entries} /></ProtectedShell>
 }
