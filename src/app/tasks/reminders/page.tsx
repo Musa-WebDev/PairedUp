@@ -1,0 +1,2 @@
+import { ProtectedShell } from '@/components/auth/ProtectedShell'
+export default async function TasksPage() { return <ProtectedShell><section className="mx-auto max-w-7xl"><p className="text-sm font-bold text-blue-600">REMINDERS</p><h1 className="mt-1 text-3xl font-bold">Reminders</h1><div className="mt-8 rounded-2xl bg-card p-6 shadow-sm"><p className="text-muted-foreground">Your group reminders will appear here.</p><button className="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">New reminder</button></div></section></ProtectedShell> }

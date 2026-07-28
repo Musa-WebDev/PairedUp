@@ -15,7 +15,7 @@ export function AuthForm() {
   const { register, formState: { errors } } = form
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-950/5 dark:border-slate-700 dark:bg-slate-800 dark:shadow-black/20 sm:p-8">
+    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:shadow-black/20 sm:p-8">
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-50">
           {mode === 'login' ? 'Welcome Back' : 'Create an Account'}
@@ -74,7 +74,7 @@ export function AuthForm() {
 
         <Button 
           type="submit" 
-          className="mt-6 w-full bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400" 
+          className="mt-6 w-full bg-blue-600 text-white hover:bg-blue-500 dark:bg-blue-400 dark:text-slate-950 dark:hover:bg-blue-300" 
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -90,7 +90,7 @@ export function AuthForm() {
         </span>
         <button 
           onClick={toggleMode}
-          className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+          className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
         >
           {mode === 'login' ? 'Sign up' : 'Sign in'}
         </button>
