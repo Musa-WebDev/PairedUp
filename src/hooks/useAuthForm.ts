@@ -15,7 +15,7 @@ export type AuthMode = 'login' | 'signup'
 // HOOK
 ////////////////////////////////////////////////////////////////////////////////
 
-export function useAuthForm(initialMode: AuthMode = 'login') {
+export function useAuthForm(initialMode: AuthMode = 'login', redirectTo?: string | null) {
   const router = useRouter()
   const [mode, setMode] = useState<AuthMode>(initialMode)
   const [error, setError] = useState<string | null>(null)
@@ -42,15 +42,16 @@ export function useAuthForm(initialMode: AuthMode = 'login') {
     
     try {
       const result = mode === 'login' 
-        ? await loginAction(data) 
-        : await signupAction(data)
+        ? await loginAction(data, redirectTo) 
+        : await signupAction(data, redirectTo)
         
       if (result?.error) {
         setError(result.error)
       } else if (result && 'requiresEmailConfirmation' in result && result.requiresEmailConfirmation) {
-        router.push(`/check-email?email=${encodeURIComponent(data.email)}`)
+        const nextParam = result.redirectTo ? `&next=${encodeURIComponent(result.redirectTo)}` : ''
+        router.push(`/check-email?email=${encodeURIComponent(data.email)}${nextParam}`)
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred.')
     } finally {
       setIsSubmitting(false)

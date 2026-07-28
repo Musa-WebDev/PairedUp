@@ -1,6 +1,7 @@
 'use server'
 
 import { createHash, randomBytes } from 'crypto'
+import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -13,12 +14,36 @@ async function currentUser() {
 }
 
 export async function createWorkspaceAction(formData: FormData) {
-  const { supabase, user } = await currentUser()
+  const { supabase } = await currentUser()
   const name = String(formData.get('name') ?? '').trim()
   if (!name) return
-  const { error } = await supabase.rpc('create_workspace', { workspace_name: name })
+  const { data, error } = await supabase.rpc('create_workspace', { workspace_name: name })
   if (error) throw new Error(error.message)
+  if (data) {
+    const cookieStore = await cookies()
+    cookieStore.set('pairup-workspace-id', data, { path: '/', sameSite: 'lax' })
+  }
   revalidatePath('/')
+}
+
+export async function setActiveWorkspaceAction(formData: FormData) {
+  const { supabase, user } = await currentUser()
+  const workspaceId = String(formData.get('workspaceId') ?? '')
+  if (!workspaceId) return
+  const { data } = await supabase
+    .from('workspace_members')
+    .select('workspace_id')
+    .eq('workspace_id', workspaceId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+  if (!data) return
+  const cookieStore = await cookies()
+  cookieStore.set('pairup-workspace-id', workspaceId, { path: '/', sameSite: 'lax' })
+  revalidatePath('/')
+  revalidatePath('/tasks/projects')
+  revalidatePath('/tasks/goals')
+  revalidatePath('/tasks/notes')
+  revalidatePath('/calendar')
 }
 
 export async function addActivityAction(formData: FormData) {
@@ -58,8 +83,13 @@ export async function createInvitationAction(formData: FormData) {
 
 export async function acceptInvitationAction(token: string) {
   const { supabase } = await currentUser()
-  const { error } = await supabase.rpc('accept_workspace_invitation', { invite_token: token })
+  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const { data, error } = await supabase.rpc('accept_workspace_invitation', { invite_token: tokenHash })
   if (error) throw new Error(error.message)
+  if (data) {
+    const cookieStore = await cookies()
+    cookieStore.set('pairup-workspace-id', data, { path: '/', sameSite: 'lax' })
+  }
   revalidatePath('/')
   redirect('/')
 }

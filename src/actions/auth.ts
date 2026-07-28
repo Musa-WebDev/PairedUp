@@ -4,11 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { AuthInput } from '@/types/auth'
 
+function safeRedirectPath(path?: string | null) {
+  if (!path?.startsWith('/') || path.startsWith('//')) return '/'
+  return path
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // ACTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function loginAction(data: AuthInput) {
+export async function loginAction(data: AuthInput, redirectTo?: string | null) {
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({
     email: data.email,
@@ -19,10 +24,10 @@ export async function loginAction(data: AuthInput) {
     return { error: error.message }
   }
 
-  redirect('/')
+  redirect(safeRedirectPath(redirectTo))
 }
 
-export async function signupAction(data: AuthInput) {
+export async function signupAction(data: AuthInput, redirectTo?: string | null) {
   const supabase = await createClient()
   
   if (!data.displayName) {
@@ -44,10 +49,10 @@ export async function signupAction(data: AuthInput) {
   }
 
   if (!signUpData.session) {
-    return { requiresEmailConfirmation: true }
+    return { requiresEmailConfirmation: true, redirectTo: safeRedirectPath(redirectTo) }
   }
 
-  redirect('/')
+  redirect(safeRedirectPath(redirectTo))
 }
 
 export async function signOutAction() {

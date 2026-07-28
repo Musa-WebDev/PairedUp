@@ -10,8 +10,8 @@ import { Spinner } from '@/components/ui/Spinner'
 // COMPONENT
 ////////////////////////////////////////////////////////////////////////////////
 
-export function AuthForm() {
-  const { mode, toggleMode, form, error, isSubmitting, onSubmit } = useAuthForm()
+export function AuthForm({ redirectTo }: { redirectTo?: string | null }) {
+  const { mode, toggleMode, form, error, isSubmitting, onSubmit } = useAuthForm('login', redirectTo)
   const { register, formState: { errors } } = form
 
   return (

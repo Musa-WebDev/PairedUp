@@ -4,8 +4,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState, type ReactNode } from 'react'
-import { CalendarDays, ChevronDown, ChevronsLeft, ChevronsRight, FolderKanban, LayoutDashboard, LogOut, Menu, Moon, NotebookPen, Sun, Target, UserRound, X } from 'lucide-react'
+import { BriefcaseBusiness, CalendarDays, ChevronDown, ChevronsLeft, ChevronsRight, FolderKanban, LayoutDashboard, LogOut, Menu, Moon, NotebookPen, Plus, Sun, Target, UserRound, X } from 'lucide-react'
 import { signOutAction } from '@/actions/auth'
+import { createWorkspaceAction, setActiveWorkspaceAction } from '@/actions/workspace'
+import type { WorkspaceOption } from '@/lib/workspace-context'
 
 const tasks = [
   ['/tasks/projects', 'Projects', FolderKanban],
@@ -14,13 +16,25 @@ const tasks = [
   ['/tasks/reminders', 'Reminders', CalendarDays],
 ] as const
 
-export function AppShell({ children, displayName, email }: { children: ReactNode; displayName: string; email: string }) {
+export function AppShell({
+  activeWorkspaceId,
+  children,
+  displayName,
+  email,
+  workspaces,
+}: {
+  activeWorkspaceId: string | null
+  children: ReactNode
+  displayName: string
+  email: string
+  workspaces: WorkspaceOption[]
+}) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [tasksOpen, setTasksOpen] = useState(pathname.startsWith('/tasks'))
-  const [dark, setDark] = useState(false)
-  useEffect(() => { const enabled = localStorage.getItem('pairup-theme') === 'dark'; setDark(enabled); document.documentElement.classList.toggle('dark', enabled) }, [])
+  const [dark, setDark] = useState(() => typeof window !== 'undefined' && localStorage.getItem('pairup-theme') === 'dark')
+  useEffect(() => { document.documentElement.classList.toggle('dark', dark) }, [dark])
   const toggleTheme = () => { const next = !dark; setDark(next); localStorage.setItem('pairup-theme', next ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', next) }
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
   const offset = collapsed ? 'lg:ml-24' : 'lg:ml-72'
@@ -48,6 +62,30 @@ export function AppShell({ children, displayName, email }: { children: ReactNode
         {nav('/calendar', 'Calendar', CalendarDays)}
         {nav('/profile', 'Profile', UserRound)}
       </nav>
+
+      {!collapsed && <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 p-3">
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase text-blue-100">
+          <BriefcaseBusiness className="size-4" />
+          Workspace
+        </div>
+        {workspaces.length > 0 && <form action={setActiveWorkspaceAction}>
+          <select
+            aria-label="Active workspace"
+            className="h-10 w-full rounded-xl border border-white/25 bg-white/95 px-2 text-sm font-semibold text-blue-950"
+            defaultValue={activeWorkspaceId ?? ''}
+            name="workspaceId"
+            onChange={(event) => event.currentTarget.form?.requestSubmit()}
+          >
+            {workspaces.map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}
+          </select>
+        </form>}
+        <form action={createWorkspaceAction} className="mt-2 flex gap-2">
+          <input required name="name" maxLength={80} placeholder="New workspace" className="h-9 min-w-0 flex-1 rounded-xl border border-white/25 bg-white/95 px-2 text-sm text-blue-950 placeholder:text-slate-500" />
+          <button title="Create workspace" className="grid size-9 place-items-center rounded-xl bg-white text-blue-700">
+            <Plus className="size-4" />
+          </button>
+        </form>
+      </div>}
 
       <div className="mt-auto space-y-2 border-t border-white/20 pt-4">
         <button onClick={toggleTheme} className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-blue-50 transition-all hover:bg-white/15 ${collapsed ? 'lg:justify-center' : ''}`}>

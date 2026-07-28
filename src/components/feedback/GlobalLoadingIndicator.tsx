@@ -12,7 +12,10 @@ export function GlobalLoadingIndicator() {
   const show = () => { setLoading(true); if (timeoutRef.current) clearTimeout(timeoutRef.current); timeoutRef.current = setTimeout(() => setLoading(false), 10000) }
   const hide = () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); setLoading(false) }
 
-  useEffect(() => { hide() }, [pathname, searchParams])
+  useEffect(() => {
+    const timeout = setTimeout(hide, 0)
+    return () => clearTimeout(timeout)
+  }, [pathname, searchParams])
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
