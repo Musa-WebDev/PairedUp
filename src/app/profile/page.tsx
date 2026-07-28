@@ -1,3 +1,9 @@
 import { ProtectedShell } from '@/components/auth/ProtectedShell'
+import { ProfileSecurity } from '@/components/profile/ProfileSecurity'
 import { createClient } from '@/lib/supabase/server'
-export default async function ProfilePage() { const supabase=await createClient(); const {data:{user}}=await supabase.auth.getUser(); return <ProtectedShell><section className="mx-auto max-w-3xl"><p className="text-sm font-bold text-blue-600">ACCOUNT</p><h1 className="mt-1 text-3xl font-bold">Profile settings</h1><div className="mt-8 space-y-6"><section className="rounded-2xl bg-card p-6 shadow-sm"><h2 className="font-bold">Personal details</h2><div className="mt-5 grid gap-4 sm:grid-cols-2"><label className="text-sm font-semibold">Display name<input defaultValue={user?.email?.split('@')[0]} className="mt-2 h-11 w-full rounded-xl border bg-transparent px-3 font-normal"/></label><label className="text-sm font-semibold">Email<input defaultValue={user?.email} disabled className="mt-2 h-11 w-full rounded-xl border bg-muted px-3 font-normal text-muted-foreground"/></label></div><button className="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white">Save changes</button></section><section className="rounded-2xl bg-card p-6 shadow-sm"><h2 className="font-bold">Security</h2><p className="mt-2 text-sm text-muted-foreground">Update your password or request an email-address change through secure confirmation links.</p><div className="mt-5 flex flex-wrap gap-3"><button className="rounded-xl border px-4 py-2.5 text-sm font-semibold">Change password</button><button className="rounded-xl border px-4 py-2.5 text-sm font-semibold">Change email</button></div></section></div></section></ProtectedShell> }
+
+export default async function ProfilePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return <ProtectedShell><section className="mx-auto max-w-3xl"><p className="text-sm font-bold text-blue-600">ACCOUNT</p><h1 className="mt-1 text-3xl font-bold">Profile settings</h1><div className="mt-8"><ProfileSecurity email={user?.email ?? ''} /></div></section></ProtectedShell>
+}
