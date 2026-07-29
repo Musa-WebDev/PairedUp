@@ -15,6 +15,7 @@ export async function ProtectedShell({ children }: { children: React.ReactNode }
   return (
     <AppShell
       activeWorkspaceId={workspaceContext.activeWorkspaceId}
+      currentUserId={user.id}
       displayName={profile?.display_name || user.email?.split('@')[0] || 'Member'}
       email={user.email || ''}
       avatarUrl={profile?.avatar_url ?? null}

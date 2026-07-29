@@ -2,11 +2,12 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState, type ReactNode } from 'react'
 import { BriefcaseBusiness, CalendarDays, ChevronDown, ChevronsLeft, ChevronsRight, FolderKanban, LayoutDashboard, LogOut, Menu, Moon, NotebookPen, Plus, Sun, Target, UserRound, X } from 'lucide-react'
 import { signOutAction } from '@/actions/auth'
-import { createWorkspaceAction, setActiveWorkspaceAction } from '@/actions/workspace'
+import { PushNotificationControl } from '@/components/notifications/PushNotificationControl'
+import { createWorkspaceAction, removeWorkspaceMemberAction, setActiveWorkspaceAction } from '@/actions/workspace'
 import type { WorkspaceMemberOption, WorkspaceOption } from '@/lib/workspace-context'
 
 const tasks = [
@@ -18,6 +19,7 @@ const tasks = [
 
 export function AppShell({
   activeWorkspaceId,
+  currentUserId,
   avatarUrl,
   workspaceMembers,
   children,
@@ -26,6 +28,7 @@ export function AppShell({
   workspaces,
 }: {
   activeWorkspaceId: string | null
+  currentUserId: string
   avatarUrl: string | null
   workspaceMembers: WorkspaceMemberOption[]
   children: ReactNode
@@ -34,18 +37,55 @@ export function AppShell({
   workspaces: WorkspaceOption[]
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [membersOpen, setMembersOpen] = useState(false)
+  const [memberToRemove, setMemberToRemove] = useState<WorkspaceMemberOption | null>(null)
+  const [removePending, setRemovePending] = useState(false)
+  const [removeError, setRemoveError] = useState('')
   const [tasksOpen, setTasksOpen] = useState(pathname.startsWith('/tasks'))
   const [dark, setDark] = useState(() => typeof window !== 'undefined' && localStorage.getItem('pairup-theme') === 'dark')
   useEffect(() => { document.documentElement.classList.toggle('dark', dark) }, [dark])
   const toggleTheme = () => { const next = !dark; setDark(next); localStorage.setItem('pairup-theme', next ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', next) }
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
+  const currentMember = workspaceMembers.find((member) => member.id === currentUserId)
+  const canManageMembers = currentMember?.role === 'owner' || currentMember?.role === 'admin'
+  const canRemoveMember = (member: WorkspaceMemberOption) => canManageMembers && member.id !== currentUserId && member.role !== 'owner'
+  async function confirmMemberRemoval() {
+    if (!memberToRemove || !activeWorkspaceId) return
+    setRemovePending(true)
+    setRemoveError('')
+    const result = await removeWorkspaceMemberAction(activeWorkspaceId, memberToRemove.id)
+    setRemovePending(false)
+    if (result.error) {
+      setRemoveError(result.error)
+      return
+    }
+    setMemberToRemove(null)
+    setMembersOpen(false)
+    router.refresh()
+  }
   const offset = collapsed ? 'lg:ml-24' : 'lg:ml-72'
   const nav = (href: string, label: string, Icon: typeof LayoutDashboard, small = false) => <Link key={href} onClick={() => setMobileOpen(false)} href={href} title={collapsed ? label : undefined} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all ${collapsed ? 'lg:justify-center' : ''} ${small ? 'py-2 text-blue-100' : ''} ${isActive(href) ? 'bg-white/95 text-blue-700 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.35)]' : 'text-blue-50 hover:bg-white/15 hover:text-white'}`}><Icon className="size-5 shrink-0" />{!collapsed && label}</Link>
 
-  return <div className="min-h-screen bg-transparent text-foreground">
+
+  return <>
+    {memberToRemove && (
+      <div role="dialog" aria-modal="true" aria-labelledby="remove-member-title" className="fixed inset-0 z-[60] grid place-items-center p-4">
+        <button type="button" aria-label="Close removal confirmation" onClick={() => !removePending && setMemberToRemove(null)} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
+        <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+          <h2 id="remove-member-title" className="text-lg font-bold">Remove {memberToRemove.displayName}?</h2>
+          <p className="mt-2 text-sm text-muted-foreground">They will immediately lose access to this workspace and its shared content. You can invite them again later if needed.</p>
+          {removeError && <p className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{removeError}</p>}
+          <div className="mt-6 flex justify-end gap-3">
+            <button type="button" disabled={removePending} onClick={() => setMemberToRemove(null)} className="h-10 rounded-xl border px-4 text-sm font-semibold hover:bg-muted disabled:opacity-60">Cancel</button>
+            <button type="button" disabled={removePending} onClick={confirmMemberRemoval} className="h-10 rounded-xl bg-rose-600 px-4 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-60">{removePending ? 'Removing…' : 'Remove'}</button>
+          </div>
+        </div>
+      </div>
+    )}
+    <div className="min-h-screen bg-transparent text-foreground">
     {mobileOpen && <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden" />}
 
     <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/15 bg-gradient-to-b from-blue-700 via-blue-600 to-indigo-700 px-4 py-5 text-white shadow-[0_25px_80px_-35px_rgba(15,23,42,0.7)] transition-all duration-200 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${collapsed ? 'lg:w-24' : 'lg:w-72'} w-72`}>
@@ -112,6 +152,7 @@ export function AppShell({
     <header className={`sticky top-0 z-30 flex h-16 items-center border-b border-border/60 bg-card/90 px-4 text-foreground shadow-[0_10px_35px_-20px_rgba(15,23,42,0.24)] backdrop-blur ${offset}`}>
       <Image src="/logo-big.png" width={160} height={40} alt="PairUp" className="hidden h-9 w-auto object-contain lg:block" priority />
       <button onClick={() => setMobileOpen(true)} className="rounded-2xl p-2 transition hover:bg-muted lg:hidden"><Menu className="size-6" /></button>
+      <PushNotificationControl/>
       {workspaceMembers.length > 0 && (
         <div className="relative ml-auto">
           <button type="button" onClick={() => setMembersOpen((open) => !open)} aria-expanded={membersOpen} aria-haspopup="menu" aria-label="View workspace members" className="flex items-center rounded-2xl p-1.5 transition hover:bg-muted">
@@ -131,10 +172,11 @@ export function AppShell({
                 {workspaceMembers.map((member) => (
                   <div key={member.id} role="menuitem" className="flex items-center gap-3 rounded-xl px-2 py-2">
                     {member.avatarUrl ? <img src={member.avatarUrl} alt="" className="size-9 rounded-full object-cover" /> : <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-xs font-bold text-white">{member.displayName.slice(0, 1).toUpperCase()}</span>}
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{member.displayName}</p>
                       <p className="text-xs capitalize text-muted-foreground">{member.role}</p>
                     </div>
+                    {canRemoveMember(member) && <button type="button" onClick={() => { setMemberToRemove(member); setMembersOpen(false); setRemoveError('') }} className="rounded-lg px-2 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10">Remove</button>}
                   </div>
                 ))}
               </div>
@@ -156,5 +198,6 @@ export function AppShell({
     </header>
 
     <main className={`min-h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8 ${offset}`}>{children}</main>
-  </div>
+    </div>
+  </>
 }

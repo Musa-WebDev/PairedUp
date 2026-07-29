@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { notifyWorkspaceMembers } from '@/lib/notifications/push'
 
 async function currentUser() {
   const supabase = await createClient()
@@ -55,6 +56,7 @@ export async function addActivityAction(formData: FormData) {
   if (!workspaceId || !title || !['movie', 'show', 'activity'].includes(category)) return
   const { error } = await supabase.from('activities').insert({ workspace_id: workspaceId, created_by: user.id, title, description, category })
   if (error) throw new Error(error.message)
+  await notifyWorkspaceMembers({ workspaceId, actorId: user.id, title: `${user.user_metadata?.display_name ?? user.email?.split('@')[0] ?? 'A workspace member'} added an activity`, body: title, url: '/' })
   revalidatePath('/')
 }
 
@@ -66,6 +68,7 @@ export async function addGoalAction(formData: FormData) {
   if (!workspaceId || !title) return
   const { error } = await supabase.from('goals').insert({ workspace_id: workspaceId, user_id: user.id, created_by: user.id, title, target_date: targetDate })
   if (error) throw new Error(error.message)
+  await notifyWorkspaceMembers({ workspaceId, actorId: user.id, title: `${user.user_metadata?.display_name ?? user.email?.split('@')[0] ?? 'A workspace member'} added a goal`, body: title, url: '/tasks/goals' })
   revalidatePath('/')
 }
 
@@ -92,4 +95,33 @@ export async function acceptInvitationAction(token: string) {
   }
   revalidatePath('/')
   redirect('/')
+}
+
+export type WorkspaceMemberActionState = { error?: string; message?: string }
+
+export async function removeWorkspaceMemberAction(workspaceId: string, memberId: string): Promise<WorkspaceMemberActionState> {
+  const { supabase, user } = await currentUser()
+  if (!workspaceId || !memberId) return { error: 'Invalid workspace member.' }
+  if (memberId === user.id) return { error: 'Use a leave-workspace action to remove yourself.' }
+
+  const [{ data: actorMembership }, { data: targetMembership }] = await Promise.all([
+    supabase.from('workspace_members').select('role').eq('workspace_id', workspaceId).eq('user_id', user.id).maybeSingle(),
+    supabase.from('workspace_members').select('role').eq('workspace_id', workspaceId).eq('user_id', memberId).maybeSingle(),
+  ])
+
+  if (!actorMembership || !['owner', 'admin'].includes(actorMembership.role)) {
+    return { error: 'Only workspace owners and admins can remove members.' }
+  }
+  if (!targetMembership) return { error: 'This member is no longer linked to the workspace.' }
+  if (targetMembership.role === 'owner') return { error: 'The workspace owner cannot be removed.' }
+
+  const { error } = await supabase
+    .from('workspace_members')
+    .delete()
+    .eq('workspace_id', workspaceId)
+    .eq('user_id', memberId)
+
+  if (error) return { error: error.message }
+  revalidatePath('/')
+  return { message: 'Member removed from the workspace.' }
 }
