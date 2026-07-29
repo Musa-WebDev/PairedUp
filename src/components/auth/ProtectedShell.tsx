@@ -12,6 +12,18 @@ export async function ProtectedShell({ children }: { children: React.ReactNode }
     getWorkspaceContext(),
   ])
   const workspaceMembers = await getWorkspaceMembers(workspaceContext.activeWorkspaceId)
+  
+  // Fetch task groups for the sidebar
+  let taskGroups: any[] = []
+  if (workspaceContext.activeWorkspaceId) {
+    const { data } = await supabase
+      .from('task_groups')
+      .select('id, title, icon, type')
+      .eq('workspace_id', workspaceContext.activeWorkspaceId)
+      .order('created_at', { ascending: true })
+    if (data) taskGroups = data
+  }
+
   return (
     <AppShell
       activeWorkspaceId={workspaceContext.activeWorkspaceId}
@@ -21,6 +33,7 @@ export async function ProtectedShell({ children }: { children: React.ReactNode }
       avatarUrl={profile?.avatar_url ?? null}
       workspaceMembers={workspaceMembers}
       workspaces={workspaceContext.workspaces}
+      taskGroups={taskGroups}
     >
       {children}
     </AppShell>

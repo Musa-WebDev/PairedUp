@@ -16,14 +16,19 @@ function refresh() { for (const path of ['/', '/tasks/projects', '/tasks/goals',
 function actorName(user: { email?: string; user_metadata?: Record<string, unknown> }) { return String(user.user_metadata?.display_name ?? user.email?.split('@')[0] ?? 'A workspace member') }
 async function announce(user: { id: string; email?: string; user_metadata?: Record<string, unknown> }, workspaceId: string, verb: string, entity: string, title: string, url: string) { await notifyWorkspaceMembers({ workspaceId, actorId: user.id, title: `${actorName(user)} ${verb} a ${entity}`, body: title, url }) }
 
+export async function createTaskGroupAction(form: FormData) {
+  const { supabase, user } = await context(); const workspaceId = text(form, 'workspaceId'), title = text(form, 'title'); if (!workspaceId || !title) return
+  const { error } = await supabase.from('task_groups').insert({ workspace_id: workspaceId, created_by: user.id, title, type: text(form, 'type') || 'personal_project', icon: text(form, 'icon') || null }); if (error) throw new Error(error.message)
+  await announce(user, workspaceId, 'added', 'task group', title, '/tasks'); refresh()
+}
 export async function createProjectAction(form: FormData) {
   const { supabase, user } = await context(); const workspaceId = text(form, 'workspaceId'), title = text(form, 'title'); if (!workspaceId || !title) return
   const { error } = await supabase.from('projects').insert({ workspace_id: workspaceId, created_by: user.id, title, description: text(form, 'description') || null, due_date: text(form, 'dueDate') || null, due_time: text(form, 'dueTime') || null }); if (error) throw new Error(error.message)
   await announce(user, workspaceId, 'added', 'project', title, '/tasks/projects'); refresh()
 }
 export async function createTaskAction(form: FormData) {
-  const { supabase, user } = await context(); const workspaceId = text(form, 'workspaceId'), title = text(form, 'title'), projectId = text(form, 'projectId'), goalId = text(form, 'goalId'); if (!workspaceId || !title) return
-  const { error } = await supabase.from('tasks').insert({ workspace_id: workspaceId, created_by: user.id, title, project_id: projectId || null, goal_id: goalId || null, due_date: text(form, 'dueDate') || null, due_time: text(form, 'dueTime') || null }); if (error) throw new Error(error.message)
+  const { supabase, user } = await context(); const workspaceId = text(form, 'workspaceId'), title = text(form, 'title'), projectId = text(form, 'projectId'), goalId = text(form, 'goalId'), taskGroupId = text(form, 'taskGroupId'); if (!workspaceId || !title) return
+  const { error } = await supabase.from('tasks').insert({ workspace_id: workspaceId, created_by: user.id, title, project_id: projectId || null, goal_id: goalId || null, task_group_id: taskGroupId || null, due_date: text(form, 'dueDate') || null, due_time: text(form, 'dueTime') || null }); if (error) throw new Error(error.message)
   await announce(user, workspaceId, 'added', 'task', title, '/tasks/projects'); refresh()
 }
 export async function updateTaskStatusAction(form: FormData) {

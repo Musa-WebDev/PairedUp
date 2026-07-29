@@ -9,6 +9,8 @@ import { signOutAction } from '@/actions/auth'
 import { PushNotificationControl } from '@/components/notifications/PushNotificationControl'
 import { createWorkspaceAction, removeWorkspaceMemberAction, setActiveWorkspaceAction } from '@/actions/workspace'
 import type { WorkspaceMemberOption, WorkspaceOption } from '@/lib/workspace-context'
+import { CreateTaskGroupModal } from '@/components/work/CreateTaskGroupModal'
+import * as FaIcons from 'react-icons/fa'
 
 const tasks = [
   ['/tasks/projects', 'Projects', FolderKanban],
@@ -26,6 +28,7 @@ export function AppShell({
   displayName,
   email,
   workspaces,
+  taskGroups = [],
 }: {
   activeWorkspaceId: string | null
   currentUserId: string
@@ -35,6 +38,7 @@ export function AppShell({
   displayName: string
   email: string
   workspaces: WorkspaceOption[]
+  taskGroups?: any[]
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -103,7 +107,16 @@ export function AppShell({
           <FolderKanban className="size-5 shrink-0" />
           {!collapsed && <><span>Tasks</span><ChevronDown className={`ml-auto size-4 ${tasksOpen ? 'rotate-180' : ''}`} /></>}
         </button>
-        {tasksOpen && !collapsed && <div className="ml-3 space-y-1 border-l border-white/30 pl-3">{tasks.map(([href, label, Icon]) => nav(href, label, Icon, true))}</div>}
+        {tasksOpen && !collapsed && <div className="ml-3 space-y-1 border-l border-white/30 pl-3">
+          {tasks.map(([href, label, Icon]) => nav(href, label, Icon, true))}
+          
+          {taskGroups.map(group => {
+             const IconComponent = group.icon && (FaIcons as any)[group.icon] ? (FaIcons as any)[group.icon] : Target;
+             return nav(`/tasks/groups/${group.id}`, group.title, IconComponent, true)
+          })}
+
+          {activeWorkspaceId && <CreateTaskGroupModal workspaceId={activeWorkspaceId} />}
+        </div>}
         {nav('/calendar', 'Calendar', CalendarDays)}
         {nav('/profile', 'Profile', UserRound)}
       </nav>
