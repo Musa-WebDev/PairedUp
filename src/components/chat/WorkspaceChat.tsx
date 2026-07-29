@@ -128,7 +128,7 @@ export function WorkspaceChat({ workspaceId, currentUserId, initialMessages }: W
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 max-h-32 min-h-[44px] rounded-xl border border-border bg-transparent px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-600"
+            className="flex-1 max-h-32 min-h-44px rounded-xl border border-border bg-transparent px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-600"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -139,7 +139,7 @@ export function WorkspaceChat({ workspaceId, currentUserId, initialMessages }: W
           <button 
             type="submit" 
             disabled={pending || !message.trim()}
-            className="h-[44px] w-[44px] shrink-0 grid place-items-center rounded-xl bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
+            className="h-44px w-44px shrink-0 grid place-items-center rounded-xl bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
           >
             <Send className="size-4" />
           </button>
