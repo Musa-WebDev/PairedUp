@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { BriefcaseBusiness, CalendarDays, ChevronDown, ChevronsLeft, ChevronsRight, FolderKanban, LayoutDashboard, LogOut, Menu, Moon, NotebookPen, Plus, Sun, Target, UserRound, X } from 'lucide-react'
 import { signOutAction } from '@/actions/auth'
 import { createWorkspaceAction, setActiveWorkspaceAction } from '@/actions/workspace'
-import type { WorkspaceOption } from '@/lib/workspace-context'
+import type { WorkspaceMemberOption, WorkspaceOption } from '@/lib/workspace-context'
 
 const tasks = [
   ['/tasks/projects', 'Projects', FolderKanban],
@@ -18,12 +18,16 @@ const tasks = [
 
 export function AppShell({
   activeWorkspaceId,
+  avatarUrl,
+  workspaceMembers,
   children,
   displayName,
   email,
   workspaces,
 }: {
   activeWorkspaceId: string | null
+  avatarUrl: string | null
+  workspaceMembers: WorkspaceMemberOption[]
   children: ReactNode
   displayName: string
   email: string
@@ -32,13 +36,14 @@ export function AppShell({
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [membersOpen, setMembersOpen] = useState(false)
   const [tasksOpen, setTasksOpen] = useState(pathname.startsWith('/tasks'))
   const [dark, setDark] = useState(() => typeof window !== 'undefined' && localStorage.getItem('pairup-theme') === 'dark')
   useEffect(() => { document.documentElement.classList.toggle('dark', dark) }, [dark])
   const toggleTheme = () => { const next = !dark; setDark(next); localStorage.setItem('pairup-theme', next ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', next) }
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
   const offset = collapsed ? 'lg:ml-24' : 'lg:ml-72'
-  const nav = (href: string, label: string, Icon: typeof LayoutDashboard, small = false) => <Link onClick={() => setMobileOpen(false)} href={href} title={collapsed ? label : undefined} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all ${collapsed ? 'lg:justify-center' : ''} ${small ? 'py-2 text-blue-100' : ''} ${isActive(href) ? 'bg-white/95 text-blue-700 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.35)]' : 'text-blue-50 hover:bg-white/15 hover:text-white'}`}><Icon className="size-5 shrink-0" />{!collapsed && label}</Link>
+  const nav = (href: string, label: string, Icon: typeof LayoutDashboard, small = false) => <Link key={href} onClick={() => setMobileOpen(false)} href={href} title={collapsed ? label : undefined} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all ${collapsed ? 'lg:justify-center' : ''} ${small ? 'py-2 text-blue-100' : ''} ${isActive(href) ? 'bg-white/95 text-blue-700 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.35)]' : 'text-blue-50 hover:bg-white/15 hover:text-white'}`}><Icon className="size-5 shrink-0" />{!collapsed && label}</Link>
 
   return <div className="min-h-screen bg-transparent text-foreground">
     {mobileOpen && <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden" />}
@@ -107,13 +112,47 @@ export function AppShell({
     <header className={`sticky top-0 z-30 flex h-16 items-center border-b border-border/60 bg-card/90 px-4 text-foreground shadow-[0_10px_35px_-20px_rgba(15,23,42,0.24)] backdrop-blur ${offset}`}>
       <Image src="/logo-big.png" width={160} height={40} alt="PairUp" className="hidden h-9 w-auto object-contain lg:block" priority />
       <button onClick={() => setMobileOpen(true)} className="rounded-2xl p-2 transition hover:bg-muted lg:hidden"><Menu className="size-6" /></button>
-      <div className="ml-auto flex items-center gap-3">
-        <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600 font-bold text-white shadow-sm">{displayName.slice(0, 1).toUpperCase()}</span>
+      {workspaceMembers.length > 0 && (
+        <div className="relative ml-auto">
+          <button type="button" onClick={() => setMembersOpen((open) => !open)} aria-expanded={membersOpen} aria-haspopup="menu" aria-label="View workspace members" className="flex items-center rounded-2xl p-1.5 transition hover:bg-muted">
+            <div className="flex -space-x-2">
+              {workspaceMembers.slice(0, 3).map((member) => member.avatarUrl ? (
+                <img key={member.id} src={member.avatarUrl} alt={member.displayName} className="size-9 rounded-full border-2 border-card object-cover" />
+              ) : (
+                <span key={member.id} title={member.displayName} className="grid size-9 place-items-center rounded-full border-2 border-card bg-gradient-to-br from-blue-600 to-purple-600 text-xs font-bold text-white">{member.displayName.slice(0, 1).toUpperCase()}</span>
+              ))}
+            </div>
+            {workspaceMembers.length > 3 && <span className="ml-2 text-xs font-bold text-muted-foreground">+{workspaceMembers.length - 3}</span>}
+          </button>
+          {membersOpen && (
+            <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-xl">
+              <p className="px-2 pb-2 pt-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">{workspaceMembers.length} workspace {workspaceMembers.length === 1 ? 'member' : 'members'}</p>
+              <div className="max-h-72 space-y-1 overflow-y-auto">
+                {workspaceMembers.map((member) => (
+                  <div key={member.id} role="menuitem" className="flex items-center gap-3 rounded-xl px-2 py-2">
+                    {member.avatarUrl ? <img src={member.avatarUrl} alt="" className="size-9 rounded-full object-cover" /> : <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-xs font-bold text-white">{member.displayName.slice(0, 1).toUpperCase()}</span>}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{member.displayName}</p>
+                      <p className="text-xs capitalize text-muted-foreground">{member.role}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      <Link href="/profile" aria-label="Open profile settings" className="flex items-center gap-3 rounded-2xl p-1.5 transition hover:bg-muted">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="size-10 rounded-full object-cover shadow-sm" />
+        ) : (
+          <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600 font-bold text-white shadow-sm">{displayName.slice(0, 1).toUpperCase()}</span>
+        )}
         <div className="hidden text-right sm:block">
           <p className="text-sm font-semibold">{displayName}</p>
           <p className="text-xs text-muted-foreground">{email}</p>
         </div>
-      </div>
+      </Link>
     </header>
 
     <main className={`min-h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8 ${offset}`}>{children}</main>

@@ -51,3 +51,16 @@ export async function updatePasswordAction(_: AccountActionState, formData: Form
   if (error) return { error: error.message }
   return { message: 'Password updated successfully. You can now sign in with your new password.' }
 }
+export async function requestPasswordResetByEmailAction(_: AccountActionState, formData: FormData): Promise<AccountActionState> {
+  const email = String(formData.get('email') ?? '').trim().toLowerCase()
+  if (!email || !email.includes('@')) return { error: 'Enter a valid email address.' }
+
+  const supabase = await createClient()
+  const appUrl = getAppUrl(await headers())
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${appUrl}/update-password`,
+  })
+
+  if (error) return { error: error.message }
+  return { message: 'If an account exists for that email, a password-reset link has been sent.' }
+}

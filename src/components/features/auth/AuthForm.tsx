@@ -1,14 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import { useAuthForm } from '@/hooks/useAuthForm'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { Spinner } from '@/components/ui/Spinner'
-
-////////////////////////////////////////////////////////////////////////////////
-// COMPONENT
-////////////////////////////////////////////////////////////////////////////////
 
 export function AuthForm({ redirectTo }: { redirectTo?: string | null }) {
   const { mode, toggleMode, form, error, isSubmitting, onSubmit } = useAuthForm('login', redirectTo)
@@ -35,63 +32,46 @@ export function AuthForm({ redirectTo }: { redirectTo?: string | null }) {
         {mode === 'signup' && (
           <div className="space-y-2">
             <Label htmlFor="displayName">Display Name</Label>
-            <Input 
-              id="displayName" 
-              placeholder="e.g. John" 
-              {...register('displayName')} 
-            />
-            {errors.displayName && (
-              <p className="text-sm text-red-500">{errors.displayName.message}</p>
-            )}
+            <Input id="displayName" placeholder="e.g. John" {...register('displayName')} />
+            {errors.displayName && <p className="text-sm text-red-500">{errors.displayName.message}</p>}
           </div>
         )}
 
         <div className="space-y-2">
           <Label htmlFor="email">Email Address</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            placeholder="you@example.com" 
-            {...register('email')} 
-          />
-          {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
-          )}
+          <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
+          {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input 
-            id="password" 
-            type="password" 
-            placeholder="••••••••" 
-            {...register('password')} 
-          />
-          {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
-          )}
+          <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+          {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
         </div>
 
-        <Button 
-          type="submit" 
-          className="mt-6 w-full bg-blue-600 text-white hover:bg-blue-500 dark:bg-blue-400 dark:text-slate-950 dark:hover:bg-blue-300" 
+        {mode === 'login' && (
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">
+              Forgot password?
+            </Link>
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          className="mt-6 w-full bg-blue-600 text-white hover:bg-blue-500 dark:bg-blue-400 dark:text-slate-950 dark:hover:bg-blue-300"
           disabled={isSubmitting}
         >
-          {isSubmitting ? (
-            <Spinner className="mr-2" />
-          ) : null}
+          {isSubmitting ? <Spinner className="mr-2" /> : null}
           {mode === 'login' ? 'Sign In' : 'Sign Up'}
         </Button>
       </form>
 
       <div className="mt-6 text-center text-sm">
         <span className="text-slate-500 dark:text-slate-400">
-          {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
+          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
         </span>
-        <button 
-          onClick={toggleMode}
-          className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
-        >
+        <button onClick={toggleMode} className="font-semibold text-blue-600 hover:underline dark:text-blue-400">
           {mode === 'login' ? 'Sign up' : 'Sign in'}
         </button>
       </div>
