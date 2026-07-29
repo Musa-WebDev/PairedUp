@@ -44,7 +44,7 @@ export function AccountabilityModal({ workspaceId, entityId, entityType, title }
       </button>
 
       {open && (
-        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] grid place-items-center p-4">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-60 grid place-items-center p-4">
           <button type="button" aria-label="Close modal" onClick={() => setOpen(false)} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
           <div className="relative w-full max-w-2xl rounded-2xl border border-border bg-card shadow-2xl overflow-hidden flex flex-col h-[80vh]">
             

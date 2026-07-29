@@ -105,7 +105,8 @@ export async function createInvitationAction(formData: FormData) {
   })
 
   if (!emailResult.success) {
-    throw new Error(`Failed to send invitation email: ${emailResult.error?.message || 'Unknown error'}`)
+    const err = emailResult.error as any;
+    throw new Error(`Failed to send invitation email: ${err?.message || 'Unknown error'}`)
   }
 
   // Do not redirect to the invite link for the inviter! Instead just return to refresh the UI.

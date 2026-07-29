@@ -58,7 +58,7 @@ export function AccountabilityChat({ workspaceId, entityId, entityType, feedback
   }
 
   return (
-    <div className={`flex flex-col bg-card rounded-2xl border border-border shadow-sm h-full min-h-[500px] ${hideHeader ? 'border-none shadow-none rounded-none' : ''}`}>
+    <div className={`flex flex-col bg-card rounded-2xl border border-border shadow-sm h-full min-h-500px ${hideHeader ? 'border-none shadow-none rounded-none' : ''}`}>
       {!hideHeader && (
         <div className="p-4 border-b border-border bg-muted/30 rounded-t-2xl flex items-center justify-between">
           <h3 className="font-bold flex items-center gap-2">
@@ -122,7 +122,7 @@ export function AccountabilityChat({ workspaceId, entityId, entityType, feedback
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Add an update or hold accountable..."
-            className="flex-1 max-h-32 min-h-[44px] rounded-xl border border-border bg-transparent px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-600"
+            className="flex-1 max-h-32 min-h-44px rounded-xl border border-border bg-transparent px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-600"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -133,7 +133,7 @@ export function AccountabilityChat({ workspaceId, entityId, entityType, feedback
           <button 
             type="submit" 
             disabled={pending || !message.trim()}
-            className="h-[44px] w-[44px] shrink-0 grid place-items-center rounded-xl bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
+            className="h-44px w-44px shrink-0 grid place-items-center rounded-xl bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
           >
             <Send className="size-4" />
           </button>

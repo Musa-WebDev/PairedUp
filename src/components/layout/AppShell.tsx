@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState, type ReactNode } from 'react'
-import { BriefcaseBusiness, CalendarDays, ChevronDown, ChevronsLeft, ChevronsRight, FolderKanban, LayoutDashboard, LogOut, Menu, Moon, NotebookPen, Plus, Sun, Target, UserRound, X } from 'lucide-react'
+import { BriefcaseBusiness, CalendarDays, ChevronDown, ChevronsLeft, ChevronsRight, FolderKanban, LayoutDashboard, LogOut, Menu, Moon, NotebookPen, Plus, Sun, Target, UserRound, X, MessageSquare } from 'lucide-react'
 import { signOutAction } from '@/actions/auth'
 import { PushNotificationControl } from '@/components/notifications/PushNotificationControl'
 import { createWorkspaceAction, removeWorkspaceMemberAction, setActiveWorkspaceAction } from '@/actions/workspace'
@@ -103,6 +103,7 @@ export function AppShell({
 
       <nav className="space-y-1.5">
         {nav('/', 'Dashboard', LayoutDashboard)}
+        {nav('/chat', 'Chat', MessageSquare)}
         <button onClick={() => setTasksOpen(!tasksOpen)} title="Tasks" className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-blue-50 transition-all hover:bg-white/15 ${collapsed ? 'lg:justify-center' : ''}`}>
           <FolderKanban className="size-5 shrink-0" />
           {!collapsed && <><span>Tasks</span><ChevronDown className={`ml-auto size-4 ${tasksOpen ? 'rotate-180' : ''}`} /></>}

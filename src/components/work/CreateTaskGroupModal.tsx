@@ -36,7 +36,7 @@ export function CreateTaskGroupModal({ workspaceId }: { workspaceId: string }) {
       </button>
 
       {open && (
-        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] grid place-items-center p-4">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-60 grid place-items-center p-4">
           <button type="button" aria-label="Close modal" onClick={() => !pending && setOpen(false)} className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" />
           <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <h2 className="text-lg font-bold">Create New Task Group</h2>
