@@ -130,7 +130,7 @@ export function AppShell({
           <select
             aria-label="Active workspace"
             className="h-10 w-full rounded-xl border border-white/25 bg-white/95 px-2 text-sm font-semibold text-blue-950"
-            defaultValue={activeWorkspaceId ?? ''}
+            value={activeWorkspaceId ?? ''}
             name="workspaceId"
             onChange={(event) => event.currentTarget.form?.requestSubmit()}
           >

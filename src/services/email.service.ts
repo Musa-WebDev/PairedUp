@@ -19,14 +19,19 @@ export async function sendEmail({ to, subject, reactComponent, html: rawHtml }: 
 
     if (!html) throw new Error('Either reactComponent or html must be provided');
 
-    const data = await resend.emails.send({
+    const response = await resend.emails.send({
       from: 'onboarding@resend.dev', // Default testing email from Resend. Change this once you add a custom domain.
       to,
       subject,
       html,
     });
     
-    return { success: true, data };
+    if (response.error) {
+      console.error('Resend API error:', response.error);
+      return { success: false, error: response.error };
+    }
+    
+    return { success: true, data: response.data };
   } catch (error) {
     console.error('Failed to send email:', error);
     return { success: false, error };

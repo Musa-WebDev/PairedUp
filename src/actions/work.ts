@@ -62,9 +62,21 @@ export async function updateNoteAction(form: FormData) {
   await announce(user, data.workspace_id, 'updated', 'note', data.title, '/tasks/notes'); refresh()
 }
 export async function addFeedbackAction(form: FormData) {
-  const { supabase, user } = await context(); const workspaceId = text(form, 'workspaceId'), message = text(form, 'message'), taskId = text(form, 'taskId'), projectId = text(form, 'projectId'); if (!workspaceId || !message || (!taskId && !projectId)) return
-  const { error } = await supabase.from('accountability_feedback').insert({ workspace_id: workspaceId, author_id: user.id, message, kind: text(form, 'kind') || 'question', task_id: taskId || null, project_id: projectId || null }); if (error) throw new Error(error.message)
-  await announce(user, workspaceId, 'added', 'accountability message', message, projectId ? '/tasks/projects' : '/tasks/goals'); refresh()
+  const { supabase, user } = await context(); const workspaceId = text(form, 'workspaceId'), message = text(form, 'message'), taskId = text(form, 'task_id'), projectId = text(form, 'project_id'), goalId = text(form, 'goal_id'), taskGroupId = text(form, 'task_group_id'); if (!workspaceId || !message || (!taskId && !projectId && !goalId && !taskGroupId)) return
+  const { error } = await supabase.from('accountability_feedback').insert({ workspace_id: workspaceId, author_id: user.id, message, kind: text(form, 'kind') || 'question', task_id: taskId || null, project_id: projectId || null, goal_id: goalId || null, task_group_id: taskGroupId || null }); if (error) throw new Error(error.message)
+  await announce(user, workspaceId, 'added', 'accountability message', message, '/tasks'); refresh()
+}
+
+export async function getFeedbacksAction(entityId: string, entityType: 'task_id' | 'project_id' | 'goal_id' | 'task_group_id') {
+  const { supabase, user } = await context();
+  const { data, error } = await supabase
+    .from('accountability_feedback')
+    .select('*, profiles!author_id(display_name)')
+    .eq(entityType, entityId)
+    .order('created_at', { ascending: true })
+  
+  if (error) throw new Error(error.message)
+  return { feedbacks: data || [], currentUserId: user.id }
 }
 export async function updateTaskScheduleAction(form: FormData) {
   const { supabase, user } = await context(); const id = text(form, 'id'), dueDate = text(form, 'dueDate') || null, dueTime = text(form, 'dueTime') || null; if (!id) return

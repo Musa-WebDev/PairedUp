@@ -6,6 +6,9 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { notifyWorkspaceMembers } from '@/lib/notifications/push'
+import { sendEmail } from '@/services/email.service'
+import WorkspaceInviteEmail from '@/emails/WorkspaceInviteEmail'
+import React from 'react'
 
 async function currentUser() {
   const supabase = await createClient()
@@ -81,7 +84,32 @@ export async function createInvitationAction(formData: FormData) {
   const tokenHash = createHash('sha256').update(token).digest('hex')
   const { error } = await supabase.from('workspace_invitations').insert({ workspace_id: workspaceId, email, token_hash: tokenHash, invited_by: user.id })
   if (error) throw new Error(error.message)
-  redirect(`/?invite=${encodeURIComponent(`/invite/${token}`)}`)
+
+  // Get workspace and inviter info for the email
+  const [{ data: workspace }, { data: inviter }] = await Promise.all([
+    supabase.from('workspaces').select('name').eq('id', workspaceId).single(),
+    supabase.from('profiles').select('display_name').eq('id', user.id).single()
+  ])
+
+  const inviteLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/invite/${token}`
+
+  // Send the email
+  const emailResult = await sendEmail({
+    to: email,
+    subject: `You've been invited to join ${workspace?.name || 'a workspace'}`,
+    reactComponent: React.createElement(WorkspaceInviteEmail, {
+      inviterName: inviter?.display_name || user.email?.split('@')[0] || 'Someone',
+      workspaceName: workspace?.name || 'a workspace',
+      inviteLink: inviteLink
+    })
+  })
+
+  if (!emailResult.success) {
+    throw new Error(`Failed to send invitation email: ${emailResult.error?.message || 'Unknown error'}`)
+  }
+
+  // Do not redirect to the invite link for the inviter! Instead just return to refresh the UI.
+  revalidatePath('/')
 }
 
 export async function acceptInvitationAction(token: string) {

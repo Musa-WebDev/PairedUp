@@ -10,12 +10,19 @@ interface AccountabilityChatProps {
   entityType: 'task_id' | 'project_id' | 'goal_id' | 'task_group_id'
   feedbacks: any[]
   currentUserId: string
+  hideHeader?: boolean
 }
 
-export function AccountabilityChat({ workspaceId, entityId, entityType, feedbacks, currentUserId }: AccountabilityChatProps) {
+export function AccountabilityChat({ workspaceId, entityId, entityType, feedbacks: initialFeedbacks, currentUserId, hideHeader = false }: AccountabilityChatProps) {
+  const [feedbacks, setFeedbacks] = React.useState(initialFeedbacks)
   const [message, setMessage] = React.useState('')
   const [kind, setKind] = React.useState('update')
   const [pending, setPending] = React.useState(false)
+
+  // Update internal state if initial props change (e.g. initial load completes)
+  React.useEffect(() => {
+    setFeedbacks(initialFeedbacks)
+  }, [initialFeedbacks])
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
 
@@ -51,16 +58,18 @@ export function AccountabilityChat({ workspaceId, entityId, entityType, feedback
   }
 
   return (
-    <div className="flex flex-col bg-card rounded-2xl border border-border shadow-sm h-[500px]">
-      <div className="p-4 border-b border-border bg-muted/30 rounded-t-2xl flex items-center justify-between">
-        <h3 className="font-bold flex items-center gap-2">
-          <MessageSquare className="size-5 text-blue-600" />
-          Accountability Log
-        </h3>
-        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-          {feedbacks.length} messages
-        </span>
-      </div>
+    <div className={`flex flex-col bg-card rounded-2xl border border-border shadow-sm h-full min-h-[500px] ${hideHeader ? 'border-none shadow-none rounded-none' : ''}`}>
+      {!hideHeader && (
+        <div className="p-4 border-b border-border bg-muted/30 rounded-t-2xl flex items-center justify-between">
+          <h3 className="font-bold flex items-center gap-2">
+            <MessageSquare className="size-5 text-blue-600" />
+            Accountability Log
+          </h3>
+          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+            {feedbacks.length} messages
+          </span>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {feedbacks.length === 0 ? (

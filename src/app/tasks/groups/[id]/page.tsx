@@ -60,7 +60,7 @@ export default async function TaskGroupPage({ params }: { params: Promise<{ id: 
   // Fetch accountability feedback
   const { data: feedbacks } = await supabase
     .from('accountability_feedback')
-    .select('*, profiles(display_name)')
+    .select('*, profiles!author_id(display_name)')
     .eq('task_group_id', id)
     .order('created_at', { ascending: true })
 
