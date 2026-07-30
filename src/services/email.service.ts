@@ -2,9 +2,6 @@ import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import React from 'react';
 
-// Initialize Resend with the API key from environment variables
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 interface SendEmailParams {
   to: string;
   subject: string;
@@ -14,6 +11,15 @@ interface SendEmailParams {
 
 export async function sendEmail({ to, subject, reactComponent, html: rawHtml }: SendEmailParams) {
   try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error('Email is not configured. Add RESEND_API_KEY to the deployment environment.');
+    }
+
+    // Server actions can be imported while Next.js collects route data at build time.
+    // Initialize Resend only when an email is actually being sent.
+    const resend = new Resend(apiKey);
+
     // Determine the HTML content: either render the React component or use the raw HTML string
     const html = reactComponent ? await render(reactComponent) : rawHtml;
 
